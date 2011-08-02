@@ -1,0 +1,123 @@
+//              Temp area for new code
+
+int     fs4k_BlackTest          (int iScanLines)
+  {
+        int             iColour, iPos, iFocus;
+        int             iTuneSpeed, iSpeed, iShutter;
+        TUNE_STATS      Stat [6], *pStat;
+        TUNE_INFO       Info [3], *pInfo;
+
+  fs4k_TuneSetWinFrame (iScanLines);
+
+//----  Reset offset and gain info
+
+  for (iColour = 0; iColour < 3; iColour++)
+    {
+    g.iAGain   [iColour]  =   63;
+    g.iAOffset [iColour]  =  -38; //  0;
+    g.iShutter [iColour]  =  890;
+    g.iBoost   [iColour]  =  256;
+    }
+  fs4k_InitCalArray ();
+
+
+  fs4k_GetFilmStatus     ();
+  if (g.rFS.byHolderType == 1)
+    {
+    fs4k_LampOn (5); 
+//  fs4k_MoveHolder (fs4k_GetBlackPos ());
+    iTuneSpeed = 2;
+    for (iPos = 80; iPos < 100; iPos +=2)
+      {
+      fs4k_MoveHolder (iPos);
+      fs4k_TuneRead (iTuneSpeed, Stat);
+      wsprintf (msg, "Pos %3d, R %5u, G %5u, B %5u,  R %5u, G %5u, B %5u\n",
+                iPos,
+                Stat [0].wAverage,  Stat [1].wAverage,  Stat [2].wAverage,
+                Stat [3].wAverage,  Stat [4].wAverage,  Stat [5].wAverage);
+      spout ();
+      if (FS4_Halt ()) break;
+      }
+#if 0
+    iPos = 88;
+    for (iFocus = 75; iFocus <= 200; iFocus += 5)
+      {
+      fs4k_MoveHolder (iPos);
+      fs4000_execute_afae (2, 0, 0, iFocus, 0, 0);
+      fs4k_TuneRead (iTuneSpeed, Stat);
+      wsprintf (msg, "Pos %3d, Focus %3d, R %5u, G %5u, B %5u,  R %5u, G %5u, B %5u\n",
+                iPos, iFocus,
+                Stat [0].wAverage,  Stat [1].wAverage,  Stat [2].wAverage,
+                Stat [3].wAverage,  Stat [4].wAverage,  Stat [5].wAverage);
+      spout ();
+      if (FS4_Halt ()) break;
+      }
+#endif
+    }
+
+  if (g.rFS.byHolderType == 2)
+    {
+    fs4k_LampOn (5);
+//  fs4k_MoveHolder (fs4k_GetBlackPos ());
+    iTuneSpeed = 2;
+    for (iPos = 760; iPos < 840; iPos +=4)
+      {
+      fs4k_MoveHolder (iPos);
+      fs4k_TuneRead (iTuneSpeed, Stat);
+      wsprintf (msg, "Pos %3d, R %5u, G %5u, B %5u,  R %5u, G %5u, B %5u\n",
+                iPos,
+                Stat [0].wAverage,  Stat [1].wAverage,  Stat [2].wAverage,
+                Stat [3].wAverage,  Stat [4].wAverage,  Stat [5].wAverage);
+      spout ();
+      if (FS4_Halt ()) break;
+      }
+    }
+
+
+  if (g.rFS.byHolderType == 0)
+    fs4k_LampOff (1);
+  for (iTuneSpeed = 1; iTuneSpeed < 13; iTuneSpeed++)
+    {
+    if ((iTuneSpeed > 6) && (iTuneSpeed % 2))
+      continue;
+#if 1
+//  for (iShutter = 800; iShutter < 1000; iShutter += 20)
+    for (iShutter =  50; iShutter < 1000; iShutter += 900)
+      {
+      g.iShutter [0]  =  g.iShutter [1]  =  g.iShutter [2]  =  iShutter;
+      fs4k_TuneRead (iTuneSpeed, Stat);
+      if (g.iMargin > 0)
+        wsprintf (msg, "Exp %2d.%02d, R %5u, G %5u, B %5u,  R %5u, G %5u, B %5u\n",
+                  iTuneSpeed, iShutter / 10,
+                  Stat [0].wAverage,  Stat [1].wAverage,  Stat [2].wAverage,
+                  Stat [3].wAverage,  Stat [4].wAverage,  Stat [5].wAverage);
+      else
+        wsprintf (msg, "Exp %2d.%02d, R %5u, G %5u, B %5u\n",
+                  iTuneSpeed, iShutter / 10,
+                  Stat [0].wAverage,  Stat [1].wAverage,  Stat [2].wAverage);
+      spout ();
+      if (FS4_Halt ()) break;
+      }
+#endif
+#if 0
+//  if (iTuneSpeed < 12)
+//    continue;
+    for (iSpeed = 0; iSpeed < 1000; iSpeed += 100)
+      {
+      g.iShutter [0] = g.iShutter [1] = g.iShutter [2] = iSpeed;
+      fs4k_TuneRead (iTuneSpeed, Stat);
+      wsprintf (msg, "Exp %2d.%03d, R %5u, G %5u, B %5u,  R %5u, G %5u, B %5u\n",
+                iTuneSpeed, iSpeed,
+                Stat [0].wAverage,  Stat [1].wAverage,  Stat [2].wAverage,
+                Stat [3].wAverage,  Stat [4].wAverage,  Stat [5].wAverage);
+      spout ();
+      if (FS4_Halt ()) break;
+      }
+#endif
+    if (FS4_Halt ()) break;
+    }
+bye:
+  return AbortWanted ();
+  }
+
+

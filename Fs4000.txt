@@ -1,0 +1,274 @@
+                        FS4000.EXE
+
+  Program to drive FS4000US scanner and to produce quality scans of my
+  Kodachrome slides.  The scan code overlaps the reading and processing
+  of the data for smooth operation and reduced time per frame.
+
+  Requires ASPI (4.6 or 4.7x); tested with W98SE, NT4, NT5.
+
+
+        Syntax:         Fs4000.exe  keywords
+
+  Keywords are either commands or modifiers.  Modifiers affect following
+  commands.  Commands effect actions.  Text is not case-sensitive.
+
+
+        Commands:
+
+  DUMP    = dump calibration info (from TUNE) to disk ("-Fs4000.cal")
+  EJECT   = eject holder
+  HOME    = retract holder
+  LOAD    = load calibration info from disk
+  OFF     = switch lamp off
+  SCAN n  = create scan file, frame 'n' ("-scan???.tif")
+  THUMB   = create thumbnail file       ("-thumb??.tif")
+  TUNE    = set variables for best scan quality
+  TUNEG   = tune for negatives (needs film in frames 1 & 2)
+
+
+        Modifiers:
+
+  ae      = precede each scan with exposure determine pass
+  ae-     = disable auto-exposure pass
+  +nnn    = boost exposure nnn % (e.g. +100 = 100% boost)
+  R+nnn   = boost red   exposure nnn % (e.g. +50 = 50% boost)
+  G+nnn   = boost green exposure nnn % (e.g. +50 = 50% boost)
+  B+nnn   = boost blue  exposure nnn % (e.g. +50 = 50% boost)
+  export  = use external program (FsTiff.exe) to build TIFF files
+  in8     = force 8-bit input mode (stupid)
+  in14    = force 14-bit input mode (default)
+  in16    = force 16-bit input mode
+  out8    = force 8-bit (gamma 2.2) output
+  out8i   = force 8-bit (gamma 2.2) inverted output (for negatives)
+  out16   = force 16-bit (linear) output (default)
+  raw     = dump raw files from scans and thumbs
+  raw-    = no raw dump (default)
+  speed n = set scan speed (n = 1 - 6, 8, 10, 12), 1= fast, 2= normal, 12= slow
+  step    = tedious test mode with keyboard halts everywhere
+  testing = shows extra info while TUNE'ing
+  tif     = create tiff files from scans and thumbs (default)
+  tif-    = no tiff file output
+
+
+        Test commands:
+
+  afae    = see source for further details
+  frame   = see source for further details
+  modes   = see source for further details
+  mytest  = see source for further details
+  pos     = see source for further details
+
+
+        Examples:
+
+  Fs4000.exe tune dump          calibrate scanner, dump info to disk
+  Fs4000.exe tune thumb         calibrate, create thumbnail
+  Fs4000.exe tune scan 1        calibrate, create scan of slide #1
+  Fs4000.exe tune ae scan 2     calibrate, auto-exposure, scan slide #2
+  Fs4000.exe step pos           watch effects of position commands
+  Fs4000.exe off                lamp off
+  Fs4000.exe step frame         watch effect of SetFrame on scan command
+
+
+        Notes:
+
+- For smooth operation Fs4000 needs about 140MB of actual RAM.
+- To eject holder: open (slightly) and close front door
+
+
+        Files:
+
+FsHost.exe      - scanner program (GUI)
+Fs4000.exe      - scanner program (console)
+Fs4000.dll      - dll so user program can drive scanner
+Fs4000imp.def   - def from Fs4000.dll
+Fs4000imp.lib   - library of Fs4000.dll exports
+libtiff.dll     - reqd by Fs4000.*
+libtiffimp.lib  - library of libtiff.dll exports
+FsTiff.exe      - program to build TIFF files from raw files
+
+
+        For user program to use Fs4000.dll:
+
+- include Fs4000.h
+- link Fs4000imp.lib
+- At BOJ,
+    use FS4_GetHandles and FS4_SetHandles to get console output, etc
+    call FS4_BOJ () and check result is 0
+- Call FS4_ProcessWord (arg) for each command word
+    and / or
+  Call FS4_Process (argc, argv []) to process array of words
+    and / or
+  Call FS4_xxxxxxx (...) directly to tune, scan, etc
+- Can call FS4_SetAbort (via another thread) to kill task in progress
+
+
+        Trivia
+
+- moving holder to 0 using abs or rel move causes fs4000 to eject holder.
+Must use home command instead.
+
+- carriage relative positioning is rejected when carriage is homed.
+
+- SetFrame 10 should stop carriage movement during scan but still get
+movement is carriage is homed.  Okay if not homed.
+
+- SetWindow SCSI_WINDOW_DESCRIPTOR.reserved[12] must be x02, x12, x22, or x32.
+Can't see the effect of this.
+
+Film holders contain white and black areas.  White areas are where each pixel
+sees the lamp.  Black areas are where the lamp is covered.  However, the black
+area in the negative holder is quite narrow and the readings are affected by
+light from the edges.
+
+The default scanning speed is 2.  Speed 1 can be used and is faster but the
+noise is higher.  Speed 3 is significantly slower than 2 and the noise is
+slightly lower.  Speeds slower than 3 do not reduce the noise.
+
+
+/*--------------------------------------------------------------
+
+                Load gamma array for 16-bit to 8-bit conversion
+
+        To reduce the effects of noise in low-level samples, the
+        slope can be limited by specifying the min value that is
+        not slope limited.  For a Dmax of 3.0 this value would be
+        65536 / (10 ^ 3) for instance.
+
+        When loading the table the code finds the first step
+        after this minimum value, gets the previous step width,
+        and then creates steps of this width back to the start of
+        the table.  When the distance back to the start is not a
+        multiple of the step width we shift the entries to fix
+        this.  This shift is the XOffset.  Also, we have Y
+        offsets (YOldBase and YNewBase) to compensate for the
+        change in number of steps to this point.  This gets the
+        values at the low end of the table correct.  Finally, we
+        have a Y multiplication factor (dYMult) to negate the
+        effect of the Y shift at the high end of the table.
+
+--------------------------------------------------------------*/
+
+/*--------------------------------------------------------------
+
+                Calc gains and offsets
+
+        'Fs4000.exe tune dump'
+
+ScanModeData.unknown3 [3] = {60, 60, 60};       // 0 - 63       analogue gain
+ScanModeData.unknown4 [3] = {280, 280, 280};    // 0 - 511      analogue offset
+ScanModeData.unknown5 [3] = {750, 750, 750};    // 0 - 1000     shutter time
+
+The CCD samples are based on the light and the shutter time.
+
+The CCD samples are adjusted by :-
+a) an offset (unk4, 0 - 255 = add 0 - 255, 256 - 511 = sub 0 - 255)
+b) programmable gain (unk3, 0 - 63 = 1 - 5.8 gain)
+
+Analogue gain (unknown3)
+- gain = 5.8 / (1.0 + (4.8 * ((63 - unknown3) / 63)))
+- entry = (3654 * (gain - 1)) / (48 * gain)
+
+Analogue offset (unknown4)
+- 9-bit entry (sign + 8-bit adjust)
+- if sign = 0, input += adjust
+- if sign = 1, input -= adjust
+- 16-bit effect = (adjust * 19) approx when analogue gain = 1
+
+Shutter time (unknown5)
+- Entry (0 - 1000) specifies shutter open portion of exposure period.
+
+
+        Order of operations.
+
+a) Wait for stable lamp.
+
+b) Set shutters for white balance.  This affects the offsets so must be
+   done first.
+
+c) Set black level analogue offsets.
+
+d) Set white level analogue gains.
+
+e) Set black level digital offset for each sample.
+
+f) Set white level digital gain for each sample.
+
+--------------------------------------------------------------*/
+
+/*--------------------------------------------------------------
+
+                Thumbnail scan with TIF output
+
+        'Fs4000.exe tune out8 thumb'
+
+        The normal approach here is to scan in 14-bit mode with
+        output set to 8-bit gamma compensated.
+
+--------------------------------------------------------------*/
+
+/*--------------------------------------------------------------
+
+                Scan a frame
+
+        'Fs4000.exe tune out8 ae scan 1'
+
+For best scan quality :-
+a) Gamma table is now linear from 0 to 32 (0 to 8 in 8-bit output).
+b) 14-bit input is now converted to 16-bit in read stage.
+c) Setting reads to 16-bit (rather than 14) reduces chance of gappy histogram.
+d) General boost now reduces scan speed to achieve effect as far as possible
+   and then adjusts multipliers to achieve final effect.
+e) Individual boost (R or G or B) uses multiplier to achieve effect.
+
+We use gamma 2.2 for 8-bit output as it is *the* standard.  Gamma 1.5 would be
+better given the realistic Dmax (about 3) of the scanner.
+
+It is better to achieve exposure and colour balance by specifying boosts here
+rather than adjusting the scan file in Photoshop, etc.
+
+The holder offsets listed below for each frame are all 36 more than the
+offset of the frame in a thumbnail view.  This is probably because the
+carriage advances a bit (past the home sensor) before the scan data
+collection starts.
+
+--------------------------------------------------------------*/
+
+/*--------------------------------------------------------------
+
+        Position holder (absolute and relative)
+
+unknown1        0 = carraige, 1 = holder
+unknown2        0 = home
+                1 = eject (only for holder)
+                2 = rel position (+offset)
+                3 = rel position (-offset)
+                4 = abs position (=offset)
+
+Carraige position is in 8000dpi increments.
+Holder position is in 360dpi increments.
+Reverse relative pos to pos < 50 causes fs4000 to eject holder.
+- fs4000 freaks if home sensed during positioning.
+Warning :- if carraige not homed before holder homed, holder hits case.
+
+--------------------------------------------------------------*/
+
+/*--------------------------------------------------------------
+
+        Test for frame, etc
+
+SetFrame.unknown1
+  bits 7-5     don't care; probably LUN
+  bit  4       must be 0
+  bit  3       1 = don't home carriage after scan
+  bits 2-0     0 = R2L scan
+               1 = L2R scan
+               2 = scan rightmost line (width times)
+               3 = scan leftmost  line (width times)
+               4 = scan current   line (width times)
+        2 & 3 position carriage before scan but don't move during scan,
+        4 doesn't move carriage at all.
+
+--------------------------------------------------------------*/
+
+

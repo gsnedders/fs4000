@@ -1,0 +1,94 @@
+                        FSHOST.EXE
+
+  GUI program to drive FS4000US scanner.  Can display thumbnail and save
+  scan images to TIFF files.  Features auto-exposure (optional), positive /
+  negative modes, and auto-repeat option.  Auto-repeat ejects holder after
+  scans done and starts scanning (selected frames) automatically when
+  holder inserted.
+
+  Does not support cropping or FARE.
+
+  Requires ASPI (4.6 or 4.7x); tested with W98SE, NT4, NT5.
+
+  FsHost.exe should be run by clicking on the file in Explorer or by creating
+  a shortcut to this exe file.  The shortcut should set the working directory
+  as required (generally the directory containing the exe file).  This working
+  directory is where all work and scan files are created.
+
+
+                        Controls                                Keyboard
+
+  Off    - lamp off.                                               O
+  Home   - retract holder.                                         M
+  Tune   - calc and save CCD info.                                 T
+           Needs film in holder if negative mode.
+  Thumb  - display thumbnail.                                      U
+  Scan   - scan selected frames, create TIFF files.                S
+  Eject  - eject holder.                                           E
+  Abort  - cancel current operation.                               A
+
+  AE     - exposure determine pre-pass.                         NumPad *
+  Neg    - slide / negative mode.                               NumPad -
+  1 - 6  - select frames to scan.                                1 - 6
+  Repeat - scan then eject; repeat when holder re-inserted.     NumPad +
+
+  Exp    - exposure time multiplier (default 2x).                  V
+  Scroll - scroll thumbnail display.                               H
+
+
+                        Tune function
+
+  This loads variables to improve scan quality.  If negative mode is selected
+  the function also compensates for the film base colour by scanning the area
+  between frames 1 and 2.
+
+  The scanner takes a while (perhaps 30 minutes) to stabilise so 'tune's done
+  during this period may be correct for a short time only.
+
+
+                        Thumbnail window
+
+  Can scroll using keyboard or mouse.  Can scroll via dragging.  The thumbnail
+  exposure is specified by the exposure setting (1x - 12x).  Changing the
+  exposure after the thumbnail changes the display image to show the result of
+  a scan at the particular setting.
+
+  After a thumbnail scan, keyboard focus is set to the scroll bar.  Most of
+  the navigation keys affect the scroll position but the up and down arrow
+  keys affect the exposure slider.
+
+
+                        Scans
+
+  Without auto-exposure each scan is a single pass operation using the
+  currently selected exposure.
+
+  With auto-exposure a forward pre-pass is done and then a reverse scan pass.
+  The selected exposure is not displayed but is recorded in the log file.
+
+
+                        Exposure
+
+  Controls exposure time (and scan speed).  The default setting is 2 and the
+  range is from 1 to 12.  This affects thumbnails (always) and scans (when
+  auto-exposure not selected).
+
+
+                        Bugs
+
+  The arrow keys are meant to adjust the exposure and scroll sliders only but
+  this does not work when a button has focus.  It seems that these keys bypass
+  the preview filter established by the form.
+
+
+                        Files
+
+  FsHost.exe   - GUI program
+  Fs4000.dll   - DLL for scanner control
+  libtiff.dll  - DLL for TIFF files
+  -FsHost.log  - Log file from latest run
+  -FsHostn.cal - Calibration data from TUNE (negative mode)
+  -FsHostp.cal - Calibration data from TUNE (positive mode)
+  -Scan???.tif - TIFF file from scan
+
+

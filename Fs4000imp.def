@@ -1,0 +1,20 @@
+LIBRARY     FS4000.DLL
+
+EXPORTS
+    _FS4_BOJ                       @4   ; _FS4_BOJ
+    _FS4_EOJ                       @5   ; _FS4_EOJ
+    _FS4_GetHandles                @12  ; _FS4_GetHandles
+    _FS4_GlobalsLoc                @14  ; _FS4_GlobalsLoc
+    _FS4_NegTune                   @7   ; _FS4_NegTune
+    _FS4_Process                   @11  ; _FS4_Process
+    _FS4_ProcessWord               @10  ; _FS4_ProcessWord
+    _FS4_Scan                      @9   ; _FS4_Scan
+    _FS4_SetAbort                  @16  ; _FS4_SetAbort
+    _FS4_SetCallback               @15  ; _FS4_SetCallback
+    _FS4_SetHandles                @13  ; _FS4_SetHandles
+    _FS4_Thumbnail                 @8   ; _FS4_Thumbnail
+    _FS4_Tune                      @6   ; _FS4_Tune
+    ___CPPdebugHook                @17  ; ___CPPdebugHook
+    _fs4k_DumpCalInfo              @1   ; _fs4k_DumpCalInfo
+    _fs4k_GetHolderType            @3   ; _fs4k_GetHolderType
+    _fs4k_LoadCalInfo              @2   ; _fs4k_LoadCalInfo
