@@ -14,9 +14,11 @@ extern "C" {
    (with one major exception - see READ_CDB below). Therefore, note how all
    routines in the .c file swap endians before setting/reading values.
 */
+/*
 #ifndef BYTE
 typedef unsigned char BYTE;
 #endif
+*/
 #ifndef UINT2
 typedef short unsigned int UINT2;
 #endif

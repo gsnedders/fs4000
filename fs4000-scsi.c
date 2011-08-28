@@ -33,7 +33,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "fs4000-scsi.h"
-#include "scsi_via_aspi.h"
+#include "wnaspi32.h"
 
 int fs4000_debug = 1;
 
