@@ -429,7 +429,7 @@ int     GetNextSpareName        (char *cAnswer, char *cTemplate)
 //#include "scsi_via_aspi.h"      // SCSI scanner using ASPI
 #include "scsi_via_usb.h"       // USB scanner using various
 #include "fs4000-scsi.h"        // FS4000 I/O code
-#include "tiffio.h"             // for TIFF library routines
+#include <tiffio.h>             // for TIFF library routines
 
 /*------------------------------------------------------------*/
 
