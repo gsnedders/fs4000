@@ -205,7 +205,7 @@ typedef struct  /* AE_BIN */
 //
 //====          DLL exported functions
 //
-
+#if 0
 int     _export fs4k_DumpCalInfo   (LPSTR pFID = "-Fs4000.cal");
 int     _export fs4k_LoadCalInfo   (LPSTR pFID = "-Fs4000.cal");
 int     _export fs4k_GetHolderType (void);
@@ -226,7 +226,7 @@ void    _export FS4_SetHandles     (HANDLE hStdIn,
 FS4KG*  _export FS4_GlobalsLoc     (void);
 FS4KG*  _export FS4_SetCallback    (void (*pfnCallback) (FS4K_NEWS*));
 void    _export FS4_SetAbort       (void);
-
+#endif
 #ifdef __cplusplus
 }
 #endif //__cplusplus

@@ -61,6 +61,7 @@
 #define STRICT          1
 #include <windows.h>
 #include <math.h>
+#include <strings.h>
 
 #define desc(x)         &x, sizeof (x)
 
@@ -247,7 +248,7 @@ void    PrintBytes              (void *pEnt, int iSize)
   }
 
 /*------------------------------------------------------------*/
-
+#if 0
 WORD    SwapEndian2             (WORD wValue)
   {
   asm   mov     ax, wValue;
@@ -289,7 +290,7 @@ void    SwapEndian4             (void *pdwEnt)
   asm   mov     [ecx], eax;
   return;
   }
-
+#endif
 /*------------------------------------------------------------*/
 
 int     RoundedDiv              (int iNum, int iDiv)
@@ -424,8 +425,8 @@ int     GetNextSpareName        (char *cAnswer, char *cTemplate)
 //      Headers for transport and fs4000 I/O code.
 
 #include "scsidefs.h"           // SCSI defines
-#include "wnaspi32.h"           // ASPI headers
-#include "scsi_via_aspi.h"      // SCSI scanner using ASPI
+//#include "wnaspi32.h"           // ASPI headers
+//#include "scsi_via_aspi.h"      // SCSI scanner using ASPI
 #include "scsi_via_usb.h"       // USB scanner using various
 #include "fs4000-scsi.h"        // FS4000 I/O code
 #include "tiffio.h"             // for TIFF library routines
@@ -573,23 +574,23 @@ int     fs4k_LoadCalInfo        (LPSTR pFID /* = "-Fs4000.cal"*/)
     }
   while (fgets (msg, sizeof (msg), pFile))
     {
-    if (memicmp (msg, "Shutter ", 8) == 0)
+    if (strncasecmp (msg, "Shutter ", 8) == 0)
       sscanf (&msg [8], " %d %d %d",
               &g.iShutter [0], &g.iShutter [1], &g.iShutter [2]);
-    else if (memicmp (msg, "Gain    ", 8) == 0)
+    else if (strncasecmp (msg, "Gain    ", 8) == 0)
       sscanf (&msg [8], " %d %d %d",
               &g.iAGain   [0], &g.iAGain   [1], &g.iAGain   [2]);
-    else if (memicmp (msg, "Offset  ", 8) == 0)
+    else if (strncasecmp (msg, "Offset  ", 8) == 0)
       sscanf (&msg [8], " %d %d %d",
               &g.iAOffset [0], &g.iAOffset [1], &g.iAOffset [2]);
-    else if (memicmp (msg, "Boost   ", 8) == 0)
+    else if (strncasecmp (msg, "Boost   ", 8) == 0)
       sscanf (&msg [8], " %d %d %d",
               &g.iBoost   [0], &g.iBoost   [1], &g.iBoost   [2]);
-    else if (memicmp (msg, "Speed ", 6) == 0)
+    else if (strncasecmp (msg, "Speed ", 6) == 0)
       sscanf (&msg [6], " %d", &g.iSpeed);
-    else if (memicmp (msg, "NegMode ", 8) == 0)
-      g.bNegMode = (memicmp (&msg [8], "TRUE", 4) == 0);
-    else if (memicmp (msg, "Pixel ", 6) == 0)
+    else if (strncasecmp (msg, "NegMode ", 8) == 0)
+      g.bNegMode = (strncasecmp (&msg [8], "TRUE", 4) == 0);
+    else if (strncasecmp (msg, "Pixel ", 6) == 0)
       {
       sscanf (&msg [6], " %d", &x);
       x = (x * 3) + g.iMargin;
@@ -1842,7 +1843,7 @@ int     fs4k_DumpScan           (LPSTR pFID, FS4K_BUF_INFO *pBI)
 
   pbSample = (BYTE*) pBI->pBuf;
   iOutRow = 0;
-  while (pbSample < &pBI->pBuf [pBI->dwBufSize])
+  while ((CHAR*)pbSample < &pBI->pBuf [pBI->dwBufSize])
     {
     TIFFWriteScanline (tif, pbSample, iOutRow, 0);
     pbSample += pBI->dwLineBytes;
@@ -2648,7 +2649,7 @@ int     fs4k_CalcSpeed          (FS4K_BUF_INFO *pBI)
                 Start-up code.
 
 --------------------------------------------------------------*/
-
+#if 0
 int     FS4_FindScanner         (BYTE   byStartHaId,
                                  BYTE   byStartTarget,
                                  BOOL   bReScanBus)
@@ -2670,7 +2671,7 @@ int     FS4_ScannerAnnounce     (void)
   spout ();
   return 0;
   }
-
+#endif
 
 int     FS4_BOJ                 (void)
   {
@@ -2686,7 +2687,7 @@ int     FS4_BOJ                 (void)
 
     return erc;
     }
-
+#if 0
   erc = aspi_init ();
   if (erc == 0)
     if ((FS4_FindScanner (2, 0, 0)) &&
@@ -2707,7 +2708,7 @@ int     FS4_BOJ                 (void)
 
     erc = fs4k_BOJ (aspi.u.max_transfer, aspi.u.hEvent);
     }
-
+#endif
   return erc;
   }
 
@@ -3353,9 +3354,9 @@ static  BOOL            bNeedFrame = FALSE;
 
 //----          Modifiers
 
-  if (strcmpi (pArg, "ae") == 0)
+  if (strcasecmp (pArg, "ae") == 0)
     g.bAutoExp = TRUE;
-  if (strcmpi (pArg, "ae-") == 0)
+  if (strcasecmp (pArg, "ae-") == 0)
     g.bAutoExp = FALSE;
   if (pArg [0] == '+')
     {
@@ -3369,107 +3370,107 @@ static  BOOL            bNeedFrame = FALSE;
       g.iBoost [z] /= 256;
       }
     }
-  if (memicmp (pArg, "R+", 2) == 0)
+  if (strncasecmp (pArg, "R+", 2) == 0)
     {
     pArg += 2;
     y = (atoi (pArg) + 100) * 256 / 100;
     g.iBoost [0] *= y;
     g.iBoost [0] /= 256;
     }
-  if (memicmp (pArg, "G+", 2) == 0)
+  if (strncasecmp (pArg, "G+", 2) == 0)
     {
     pArg += 2;
     y = (atoi (pArg) + 100) * 256 / 100;
     g.iBoost [1] *= y;
     g.iBoost [1] /= 256;
     }
-  if (memicmp (pArg, "B+", 2) == 0)
+  if (strncasecmp (pArg, "B+", 2) == 0)
     {
     pArg += 2;
     y = (atoi (pArg) + 100) * 256 / 100;
     g.iBoost [2] *= y;
     g.iBoost [2] /= 256;
     }
-  if (strcmpi (pArg, "debug") == 0)
+  if (strcasecmp (pArg, "debug") == 0)
     fs4000_debug = TRUE;
-  if (strcmpi (pArg, "export") == 0)
+  if (strcasecmp (pArg, "export") == 0)
     g.bUseHelper = TRUE;
-  if (strcmpi (pArg, "export-") == 0)
+  if (strcasecmp (pArg, "export-") == 0)
     g.bUseHelper = FALSE;
-  if (strcmpi (pArg, "in8") == 0)
+  if (strcasecmp (pArg, "in8") == 0)
     fs4k_SetInMode (8);
-  if (strcmpi (pArg, "in14") == 0)
+  if (strcasecmp (pArg, "in14") == 0)
     fs4k_SetInMode (14);
-  if (strcmpi (pArg, "in16") == 0)
+  if (strcasecmp (pArg, "in16") == 0)
     fs4k_SetInMode (16);
-  if (strcmpi (pArg, "out16") == 0)
+  if (strcasecmp (pArg, "out16") == 0)
     g.pbXlate = NULL;
-  if (strcmpi (pArg, "out8") == 0)
+  if (strcasecmp (pArg, "out8") == 0)
     g.pbXlate = g.b16_822;
-  if (strcmpi (pArg, "out8i") == 0)
+  if (strcasecmp (pArg, "out8i") == 0)
     g.pbXlate = g.b16_822i;
-  if (strcmpi (pArg, "raw") == 0)
+  if (strcasecmp (pArg, "raw") == 0)
     g.bSaveRaw = TRUE;
-  if (strcmpi (pArg, "raw-") == 0)
+  if (strcasecmp (pArg, "raw-") == 0)
     g.bSaveRaw = FALSE;
-  if (strcmpi (pArg, "speed") == 0)
+  if (strcasecmp (pArg, "speed") == 0)
     bNeedSpeed = TRUE;
-  if (strcmpi (pArg, "step") == 0)
+  if (strcasecmp (pArg, "step") == 0)
     g.bStepping = TRUE;
-  if (strcmpi (pArg, "testing") == 0)
+  if (strcasecmp (pArg, "testing") == 0)
     g.bTesting = TRUE;
-  if (strcmpi (pArg, "tif") == 0)
+  if (strcasecmp (pArg, "tif") == 0)
     g.bMakeTiff = TRUE;
-  if (strcmpi (pArg, "tif-") == 0)
+  if (strcasecmp (pArg, "tif-") == 0)
     g.bMakeTiff = FALSE;
 
 //----          Normal functions
 
-  if (strcmpi (pArg, "dump") == 0)
-    fs4k_DumpCalInfo ();
-  if (strcmpi (pArg, "eject") == 0)
+  if (strcasecmp (pArg, "dump") == 0)
+    fs4k_DumpCalInfo ("calinfo");
+  if (strcasecmp (pArg, "eject") == 0)
     {
     fs4000_move_position (0, 0, 0);
     fs4000_move_position (1, 1, 0);
     }
-  if (strcmpi (pArg, "home") == 0)
+  if (strcasecmp (pArg, "home") == 0)
     {
     fs4000_move_position (0, 0, 0);
     fs4k_MoveHolder (0);
     }
-  if (strcmpi (pArg, "load") == 0)
-    fs4k_LoadCalInfo ();
-  if (strcmpi (pArg, "off") == 0)
+  if (strcasecmp (pArg, "load") == 0)
+    fs4k_LoadCalInfo ("calinfo");
+  if (strcasecmp (pArg, "off") == 0)
     {
     fs4000_move_position (0, 0, 0);
     fs4k_LampOff    (0);
     fs4k_MoveHolder (0);
     }
-  if (strcmpi (pArg, "scan") == 0)
+  if (strcasecmp (pArg, "scan") == 0)
     bNeedFrame = TRUE;
-  if (strcmpi (pArg, "thumb") == 0)
+  if (strcasecmp (pArg, "thumb") == 0)
     FS4_Thumbnail (g.szThumbFID);
-  if (strcmpi (pArg, "tune") == 0)
-    FS4_Tune ();
-  if (strcmpi (pArg, "tuneg") == 0)
-    FS4_NegTune ();
+  if (strcasecmp (pArg, "tune") == 0)
+    FS4_Tune (-1);
+  if (strcasecmp (pArg, "tuneg") == 0)
+    FS4_NegTune (-1);
 
 //----          Test functions
 
-  if (strcmpi (pArg, "afae") == 0)
+  if (strcasecmp (pArg, "afae") == 0)
     FS4_AfAeTest ();
-  if (strcmpi (pArg, "frame") == 0)
+  if (strcasecmp (pArg, "frame") == 0)
     for (x = 0; x < 5; x++)
       FS4_FrameTest (4000, x);
-  if (strcmpi (pArg, "modes") == 0)
+  if (strcasecmp (pArg, "modes") == 0)
     FS4_ScanModeTest ("-mode");
-  if (strcmpi (pArg, "mytest") == 0)
+  if (strcasecmp (pArg, "mytest") == 0)
     FS4_Test ();
-  if (strcmpi (pArg, "mytest1") == 0)
+  if (strcasecmp (pArg, "mytest1") == 0)
     FS4_Test1 ();
-  if (strcmpi (pArg, "pos") == 0)
+  if (strcasecmp (pArg, "pos") == 0)
     FS4_Position ();
-  if (strcmpi (pArg, "tunetest") == 0)
+  if (strcasecmp (pArg, "tunetest") == 0)
     for (x = 0; x < 7; x++)
       {
       wsprintf (msg, "**** Speed = %d\r\n", x);
@@ -3477,7 +3478,7 @@ static  BOOL            bNeedFrame = FALSE;
       if (FS4_Tune (x))
         break;
       }
-  if (strcmpi (pArg, "blacktest") == 0)
+  if (strcasecmp (pArg, "blacktest") == 0)
     fs4k_BlackTest (100);
 
 bye:
@@ -3532,7 +3533,7 @@ int     FS4_Process             (int argc, char **argv)
         }
       continue;
       }
-    if (strcmpi (pArg, "close") == 0)
+    if (strcasecmp (pArg, "close") == 0)
       {
       if (hFile)
         {
@@ -3543,7 +3544,7 @@ int     FS4_Process             (int argc, char **argv)
         spout ("No input file open\r\n");
       continue;
       }
-    if (memicmp (pArg, "pipe=", 5) == 0)
+    if (strncasecmp (pArg, "pipe=", 5) == 0)
       {
       if (hPipeIn)
         CloseHandle (hPipeIn);
