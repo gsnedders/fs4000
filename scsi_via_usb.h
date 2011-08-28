@@ -1,8 +1,6 @@
 #ifndef _SCSI_VIA_USB_H_
 #define _SCSI_VIA_USB_H_
 
-#include "wnaspi32.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif //__cplusplus

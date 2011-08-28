@@ -33,7 +33,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include "fs4000-scsi.h"
-#include "wnaspi32.h"
+
+// Formally in wnaspi32.h
+#define SRB_DIR_IN                  0x08        // Transfer from SCSI target to host
+#define SRB_DIR_OUT                 0x10        // Transfer from host to SCSI target
 
 int fs4000_debug = 1;
 
