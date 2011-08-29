@@ -119,7 +119,7 @@ void print_byte_array(BYTE *bytes, unsigned int num_bytes)
 
 void print_fs4000_test_unit_ready(FS4000_TEST_UNIT_READY_CDB *cdb)
 {
-    static FS4000_TEST_UNIT_READY_CDB expected_values = { 0, 0, 0, 0, 0, 0 };
+    static FS4000_TEST_UNIT_READY_CDB expected_values = { 0, 0, { 0, 0, 0 }, 0 };
 
     printf("TEST UNIT READY ");
     if (memcmp(cdb, &expected_values, sizeof(FS4000_TEST_UNIT_READY_CDB)) != 0) {
@@ -308,8 +308,8 @@ void swap_endian_FS4000_MODE_SELECT_DATA_OUT(FS4000_MODE_SELECT_DATA_OUT *data)
 void print_fs4000_mode_select(FS4000_MODE_SELECT_CDB *cdb,
                               FS4000_MODE_SELECT_DATA_OUT *data)
 {
-    static FS4000_MODE_SELECT_CDB expected_cdb = { 0x15, 0x10, 0, 0, 0xc, 0 };
-    static FS4000_MODE_SELECT_DATA_OUT expected_data = { 0, 0, 0, 0, { 3, 6, 0, 0, 4000, 0, 0 }};
+    static FS4000_MODE_SELECT_CDB expected_cdb = { 0x15, 0x10, { 0, 0 }, 0xc, 0 };
+    static FS4000_MODE_SELECT_DATA_OUT expected_data = { { 0, 0, 0, 0 }, { 3, 6, 0, 0, 4000, 0, 0 } };
 
     printf("MODE SELECT ");
     if (memcmp(cdb, &expected_cdb, sizeof(FS4000_MODE_SELECT_CDB)) != 0) {
@@ -355,7 +355,7 @@ int fs4000_mode_select(void)
 
 void print_fs4000_reserve_unit(FS4000_RESERVE_UNIT_CDB *cdb)
 {
-    static FS4000_RESERVE_UNIT_CDB expected_cdb = { 0x16, 0, 0, 0, 0, 0 };
+    static FS4000_RESERVE_UNIT_CDB expected_cdb = { 0x16, 0, { 0, 0, 0 }, 0 };
 
     printf("RESERVE UNIT ");
     if (memcmp(cdb, &expected_cdb, sizeof(FS4000_RESERVE_UNIT_CDB)) != 0) {
@@ -385,7 +385,7 @@ int fs4000_reserve_unit(void)
 
 void print_fs4000_release_unit(FS4000_RELEASE_UNIT_CDB *cdb)
 {
-    static FS4000_RELEASE_UNIT_CDB expected_cdb = { 0x17, 0, 0, 0, 0, 0 };
+    static FS4000_RELEASE_UNIT_CDB expected_cdb = { 0x17, 0, { 0, 0, 0 }, 0 };
 
     printf("RELEASE UNIT ");
     if (memcmp(cdb, &expected_cdb, sizeof(FS4000_RELEASE_UNIT_CDB)) != 0) {
@@ -416,7 +416,7 @@ int fs4000_release_unit(void)
 void print_fs4000_scan(FS4000_SCAN_CDB *cdb,
                        FS4000_SCAN_DATA_OUT *data)
 {
-    static FS4000_SCAN_CDB expected_cdb = { 0x1b, 0, 0, 0, 1, 0 };
+    static FS4000_SCAN_CDB expected_cdb = { 0x1b, 0, { 0, 0 }, 1, 0 };
 
     printf("SCAN ");
     if (memcmp(cdb, &expected_cdb, sizeof(FS4000_SCAN_CDB)) != 0) {
@@ -521,8 +521,8 @@ void swap_endian_FS4000_SET_WINDOW_CDB(FS4000_SET_WINDOW_CDB *cdb)
 void print_fs4000_set_window(FS4000_SET_WINDOW_CDB *cdb,
                              FS4000_SET_WINDOW_DATA_OUT *data)
 {
-    static FS4000_SET_WINDOW_CDB expected_cdb = { 0x24, 0, 0, 0, 0, 0, 0, 72, 0 };
-    static SCSI_WINDOW_HEADER expected_values_header = { 0, 0, 0, 0, 0, 64 };
+    static FS4000_SET_WINDOW_CDB expected_cdb = { 0x24, 0, { 0, 0, 0, 0 }, 0, 72, 0 };
+    static SCSI_WINDOW_HEADER expected_values_header = { 0, { 0, 0, 0, 0 }, 64 };
 //  SCSI_WINDOW_DESCRIPTOR *w = &data->window[1];
 
     printf("SET WINDOW ");
@@ -586,8 +586,8 @@ void swap_endian_FS4000_GET_WINDOW_CDB(FS4000_GET_WINDOW_CDB *cdb)
 void print_fs4000_get_window(FS4000_GET_WINDOW_CDB *cdb,
                              FS4000_GET_WINDOW_DATA_IN *data)
 {
-    static FS4000_GET_WINDOW_CDB expected_cdb = { 0x25, 1, 0, 0, 0, 0, 0, 72, 0 };
-    static SCSI_WINDOW_HEADER expected_values_header = { 70, 0, 0, 0, 0, 64 };
+    static FS4000_GET_WINDOW_CDB expected_cdb = { 0x25, 1, { 0, 0, 0 }, 0, 0, 72, 0 };
+    static SCSI_WINDOW_HEADER expected_values_header = { 70, { 0, 0, 0, 0 }, 64 };
 
     if (cdb != NULL) {
         printf("GET WINDOW ");
@@ -720,7 +720,7 @@ void swap_endian_FS4000_GET_DATA_STATUS_DATA_IN(FS4000_GET_DATA_STATUS_DATA_IN *
 void print_fs4000_get_data_status(FS4000_GET_DATA_STATUS_CDB *cdb,
                                   FS4000_GET_DATA_STATUS_DATA_IN *data)
 {
-    static FS4000_GET_DATA_STATUS_CDB expected_cdb = { 0x34, 0, 0, 0, 0, 0, 0, 28, 0 };
+    static FS4000_GET_DATA_STATUS_CDB expected_cdb = { 0x34, 0, { 0, 0, 0, 0, 0 }, 28, 0 };
 
     if (cdb != NULL) {
         printf("GET DATA STATUS ");
@@ -845,7 +845,7 @@ void print_fs4000_get_scan_mode(FS4000_GET_SCAN_MODE_CDB *cdb,
     }
 
     if (data_12 != NULL) {
-        static FS4000_GET_SCAN_MODE_DATA_IN_12 expected_data12 = { 0x0b, 0, 0, 0, 0x02, 0x06, 0x80, 0x05, 0x27, 0x10, 0, 0 };
+        static FS4000_GET_SCAN_MODE_DATA_IN_12 expected_data12 = { { 0x0b, 0, 0, 0, 0x02, 0x06, 0x80, 0x05, 0x27, 0x10, 0, 0 } };
 
         if (memcmp(data_12, &expected_data12, sizeof(FS4000_GET_SCAN_MODE_DATA_IN_12)) != 0) {
             printf("\tUNEXPECTED VALUES: ");
@@ -970,7 +970,7 @@ int fs4000_define_scan_mode(FS4000_DEFINE_SCAN_MODE_DATA_OUT *data)
 
 void print_FS4000_SCAN_FOR_THUMBNAIL_CDB(FS4000_SCAN_FOR_THUMBNAIL_CDB *cdb)
 {
-    static FS4000_SCAN_FOR_THUMBNAIL_CDB expected_values = { 0xd8, 0, 0, 0, 1, 0 };
+    static FS4000_SCAN_FOR_THUMBNAIL_CDB expected_values = { 0xd8, 0, { 0, 0 }, 1, 0 };
 
     printf("SCAN FOR THUMBNAIL ");
     if (memcmp(cdb, &expected_values, sizeof(FS4000_SCAN_FOR_THUMBNAIL_CDB)) != 0)
@@ -1010,7 +1010,7 @@ void swap_endian_FS4000_EXECUTE_AFAE_DATA_OUT(FS4000_EXECUTE_AFAE_DATA_OUT *data
 void print_fs4000_execute_afae(FS4000_EXECUTE_AFAE_CDB *cdb,
                                FS4000_EXECUTE_AFAE_DATA_OUT *data)
 {
-    static FS4000_EXECUTE_AFAE_CDB expected_cdb = { 0xe0, 0, 0, 0, 0, 0, 0, 0, 8, 0 };
+    static FS4000_EXECUTE_AFAE_CDB expected_cdb = { 0xe0, { 0, 0, 0, 0, 0, 0, 0 }, 8, 0 };
 
     printf("EXECUTE AF/AE ");
     if (memcmp(cdb, &expected_cdb, sizeof(FS4000_EXECUTE_AFAE_CDB)) != 0) {
@@ -1068,8 +1068,8 @@ void print_fs4000_get_film_status(FS4000_GET_FILM_STATUS_CDB *cdb,
                                   FS4000_GET_FILM_STATUS_DATA_IN_25 *data25,
                                   FS4000_GET_FILM_STATUS_DATA_IN_28 *data28)
 {
-    static FS4000_GET_FILM_STATUS_CDB expected_cdb1 = { 0xe1, 00, 00, 00, 00, 00, 00, 00, 28, 00 };
-    static FS4000_GET_FILM_STATUS_CDB expected_cdb2 = { 0xe1, 00, 00, 00, 00, 00, 00, 00, 25, 00 };
+    static FS4000_GET_FILM_STATUS_CDB expected_cdb1 = { 0xe1, { 00, 00, 00, 00, 00, 00, 00 }, 28, 00 };
+    static FS4000_GET_FILM_STATUS_CDB expected_cdb2 = { 0xe1, { 00, 00, 00, 00, 00, 00, 00 }, 25, 00 };
 
     if (cdb != NULL) {
         printf("GET FILM STATUS ");
@@ -1146,7 +1146,7 @@ int fs4000_get_film_status(int shorter,
 
 void print_fs4000_cancel(FS4000_CANCEL_CDB *cdb)
 {
-    static FS4000_CANCEL_CDB expected_cdb = { 0xe4, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+    static FS4000_CANCEL_CDB expected_cdb = { 0xe4, { 0, 0, 0, 0, 0, 0, 0, 0 }, 0 };
 
     printf("CANCEL ");
     if (memcmp(cdb, &expected_cdb, sizeof(FS4000_CANCEL_CDB)) != 0) {
@@ -1249,7 +1249,7 @@ void swap_endian_FS4000_GET_LAMP_DATA_IN(FS4000_GET_LAMP_DATA_IN *data)
 void print_fs4000_get_lamp(FS4000_GET_LAMP_CDB *cdb,
                            FS4000_GET_LAMP_DATA_IN *data)
 {
-    static FS4000_GET_LAMP_CDB expected_cdb = { 0xea, 0, 0, 0, 0, 0, 0, 0, 10, 0 };
+    static FS4000_GET_LAMP_CDB expected_cdb = { 0xea, { 0, 0, 0, 0, 0, 0, 0 }, 10, 0 };
 
     if (cdb != NULL) {
         printf("GET LAMP ");
@@ -1340,7 +1340,7 @@ void swap_endian_FS4000_SET_WINDOW_FOR_THUMBNAIL_CDB(FS4000_SET_WINDOW_FOR_THUMB
 }
 
 void print_FS4000_SET_WINDOW_FOR_THUMBNAIL_CDB(FS4000_SET_WINDOW_FOR_THUMBNAIL_CDB *cdb) {
-    static FS4000_SET_WINDOW_FOR_THUMBNAIL_CDB expected_values = { 0xf0, 0, 0, 0, 0, 0, 0, 72, 0 };
+    static FS4000_SET_WINDOW_FOR_THUMBNAIL_CDB expected_values = { 0xf0, 0, { 0, 0, 0, 0 }, 0, 72, 0 };
 
     printf("SET WINDOW FOR THUMBNAIL ");
     if (memcmp(cdb, &expected_values, sizeof(FS4000_SET_WINDOW_FOR_THUMBNAIL_CDB)) != 0)
@@ -1360,7 +1360,7 @@ void swap_endian_FS4000_GET_WINDOW_FOR_THUMBNAIL_CDB(FS4000_GET_WINDOW_FOR_THUMB
 }
 
 void print_FS4000_GET_WINDOW_FOR_THUMBNAIL_CDB(FS4000_GET_WINDOW_FOR_THUMBNAIL_CDB *cdb) {
-    static FS4000_GET_WINDOW_FOR_THUMBNAIL_CDB expected_values = { 0xf1, 1, 0, 0, 0, 0, 0, 72, 0 };
+    static FS4000_GET_WINDOW_FOR_THUMBNAIL_CDB expected_values = { 0xf1, 1, { 0, 0, 0 }, 0, 0, 72, 0 };
 
     printf("GET WINDOW FOR THUMBNAIL ");
     if (memcmp(cdb, &expected_values, sizeof(FS4000_GET_WINDOW_FOR_THUMBNAIL_CDB)) != 0)
@@ -1384,7 +1384,7 @@ void create_FS4000_GET_WINDOW_FOR_THUMBNAIL_CDB(FS4000_GET_WINDOW_FOR_THUMBNAIL_
 void print_fs4000_control_led(FS4000_CONTROL_LED_CDB *cdb,
                               FS4000_CONTROL_LED_DATA_OUT *data)
 {
-    static FS4000_CONTROL_LED_CDB expected_cdb = { 0xf3, 0, 0, 0, 0, 0, 0, 0, 4, 0 };
+    static FS4000_CONTROL_LED_CDB expected_cdb = { 0xf3, { 0, 0, 0, 0, 0, 0, 0 }, 4, 0 };
 
     printf("CONTROL LED ");
     if (memcmp(cdb, &expected_cdb, sizeof(FS4000_CONTROL_LED_CDB)) != 0) {
@@ -1426,8 +1426,8 @@ void swap_endian_SCSI_SENSE(SCSI_SENSE *data)
 
 void print_SCSI_SENSE(SCSI_SENSE *data)
 {
-    BYTE error = data->error_code & 0x7f;
-    BYTE sense_key = data->flags_and_sense_key & 0x0f;
+    //BYTE error = data->error_code & 0x7f;
+    //BYTE sense_key = data->flags_and_sense_key & 0x0f;
     BYTE asc = data->additional_sense_code;
     BYTE ascq = data->additional_sense_code_qualifier;
 
@@ -1555,8 +1555,8 @@ void
 print_fs4000_set_thumbnail_window (FS4000_SET_WINDOW_FOR_THUMBNAIL_CDB *cdb,
                                    FS4000_SET_WINDOW_DATA_OUT *data)
 {
-        static FS4000_SET_WINDOW_FOR_THUMBNAIL_CDB expected_cdb = { 0xF0, 0, 0, 0, 0, 0, 0, 72, 0 };
-        static SCSI_WINDOW_HEADER expected_values_header = { 0, 0, 0, 0, 0, 64 };
+        static FS4000_SET_WINDOW_FOR_THUMBNAIL_CDB expected_cdb = { 0xF0, 0, { 0, 0, 0, 0 }, 0, 72, 0 };
+        static SCSI_WINDOW_HEADER expected_values_header = { 0, { 0, 0, 0, 0 }, 64 };
 //      SCSI_WINDOW_DESCRIPTOR *w = &data->window[1];
 
   printf("SET THUMBNAIL WINDOW ");
@@ -1627,8 +1627,8 @@ void
 print_fs4000_get_thumbnail_window (FS4000_GET_WINDOW_FOR_THUMBNAIL_CDB *cdb,
                                    FS4000_GET_WINDOW_DATA_IN *data)
 {
-        static FS4000_GET_WINDOW_FOR_THUMBNAIL_CDB expected_cdb = { 0xF1, 1, 0, 0, 0, 0, 0, 72, 0 };
-        static SCSI_WINDOW_HEADER expected_values_header = { 70, 0, 0, 0, 0, 64 };
+        static FS4000_GET_WINDOW_FOR_THUMBNAIL_CDB expected_cdb = { 0xF1, 1, { 0, 0, 0 }, 0, 0, 72, 0 };
+        static SCSI_WINDOW_HEADER expected_values_header = { 70, { 0, 0, 0, 0 }, 64 };
 
   if (cdb != NULL)
     {
