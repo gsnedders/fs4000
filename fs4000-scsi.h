@@ -5,8 +5,6 @@
 extern "C" {
 #endif
 
-#define IS_BIGENDIAN() ( ((char)(int)1) == 0 )
-
 /* pack the structures tightly so that there are no unexpected fill bytes.
    These need to map to SCSI CDBs exactly */
 #pragma pack(push, 1)

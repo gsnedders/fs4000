@@ -46,9 +46,17 @@ int fs4000_debug = 1;
 
     ------------------------------------------------- */
 
+int is_big_endian(void)
+{
+    int i = 1;
+    char c[sizeof(int)];
+    memcpy(c, &i, sizeof(int));
+    return c[0] == 0;
+}
+
 void swap_endian_4(UINT4 *n)
 {
-    if (!IS_BIGENDIAN()) {
+    if (!is_big_endian()) {
 	BYTE *bytes = (BYTE *)n;
 	BYTE temp;
 
@@ -64,7 +72,7 @@ void swap_endian_4(UINT4 *n)
 
 void swap_endian_2(UINT2 *n)
 {
-    if (!IS_BIGENDIAN()) {
+    if (!is_big_endian()) {
 	BYTE *bytes = (BYTE *)n;
 	BYTE temp;
 
