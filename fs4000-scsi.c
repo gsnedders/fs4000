@@ -48,26 +48,30 @@ int fs4000_debug = 1;
 
 void swap_endian_4(UINT4 *n)
 {
-    BYTE *bytes = (BYTE *)n;
-    BYTE temp;
+    if (!IS_BIGENDIAN()) {
+	BYTE *bytes = (BYTE *)n;
+	BYTE temp;
 
-    temp = bytes[0];
-    bytes[0] = bytes[3];
-    bytes[3] = temp;
+	temp = bytes[0];
+	bytes[0] = bytes[3];
+	bytes[3] = temp;
 
-    temp = bytes[1];
-    bytes[1] = bytes[2];
-    bytes[2] = temp;
+	temp = bytes[1];
+	bytes[1] = bytes[2];
+	bytes[2] = temp;
+    }
 }
 
 void swap_endian_2(UINT2 *n)
 {
-    BYTE *bytes = (BYTE *)n;
-    BYTE temp;
+    if (!IS_BIGENDIAN()) {
+	BYTE *bytes = (BYTE *)n;
+	BYTE temp;
 
-    temp = bytes[0];
-    bytes[0] = bytes[1];
-    bytes[1] = temp;
+	temp = bytes[0];
+	bytes[0] = bytes[1];
+	bytes[1] = temp;
+    }
 }
 
 const char *convert_opcode_to_symbolic_name(BYTE opcode)
