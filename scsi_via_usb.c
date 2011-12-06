@@ -31,10 +31,9 @@
 
 --------------------------------------------------------------*/
 
-#define STRICT
+#include <libusb.h>
 #include <windows.h>
 #include <stdio.h>
-#include <libusb.h>
 
 #include "scsidefs.h"
 #include "scsi_via_usb.h"
