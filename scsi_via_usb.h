@@ -5,6 +5,9 @@
 extern "C" {
 #endif //__cplusplus
 
+#define SRB_DIR_IN                  0x08        // Transfer from SCSI target to host
+#define SRB_DIR_OUT                 0x10        // Transfer from host to SCSI target
+
 //--------------------------------------------------------------
 //
 //              For USB access via file
@@ -338,7 +341,7 @@ typedef struct  /* USB_GLOBALS */
         HANDLE          hScanner;
         int             HA_count;
         struct usb_device      *pDev;
-        usb_dev_handle  *pUdev;
+        libusb_device_handle  *pUdev;
         BYTE            byInterfaceNumber;
 }
   USB_GLOBALS;

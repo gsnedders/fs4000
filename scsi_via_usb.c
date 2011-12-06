@@ -34,6 +34,7 @@
 #define STRICT
 #include <windows.h>
 #include <stdio.h>
+#include <libusb.h>
 
 #include "scsidefs.h"
 #include "scsi_via_usb.h"
@@ -53,71 +54,6 @@
 
 USB_FIELDS      usb;
 
-usb_dev_handle* (*lusb_open)            (struct usb_device *dev);
-int     (*lusb_close)                   (usb_dev_handle *dev);
-int     (*lusb_bulk_read)               (usb_dev_handle *dev,
-        int ep,
-        char *bytes,
-        int size,
-        int timeout);
-int     (*lusb_control_msg)             (usb_dev_handle *dev,
-        int requesttype,
-        int request,
-        int value,
-        int index,
-        char *bytes,
-        int size,
-        int timeout);
-int     (*lusb_set_configuration)       (usb_dev_handle *dev,
-        int configuration);
-int     (*lusb_claim_interface)         (usb_dev_handle *dev,
-        int interface);
-int     (*lusb_release_interface)       (usb_dev_handle *dev,
-        int interface);
-void    (*lusb_init)                    (void);
-void    (*lusb_set_debug)               (int level);
-int     (*lusb_find_busses)             (void);
-int     (*lusb_find_devices)            (void);
-struct usb_bus* (*lusb_get_busses)      (void);
-struct usb_version* (*lusb_get_version) (void);
-
-
-/*--------------------------------------------------------------
-
-                USB user start
-
---------------------------------------------------------------*/
-
-int
-usb_init_user           (USB_PER_USER *pUser)
-{
-    Nullit (*pUser);
-    pUser->hEvent = CreateEvent (NULL, TRUE, FALSE, NULL);
-    if (!pUser->hEvent)
-    {
-        printf("ERROR: Could not create the event object.\n");
-        return -1;
-    }
-    pUser->HA_count = usb.g.HA_count;
-    pUser->max_transfer = 65536;
-    return 0;
-}
-
-
-/*--------------------------------------------------------------
-
-                USB user close
-
---------------------------------------------------------------*/
-
-int
-usb_deinit_user         (USB_PER_USER *pUser)
-{
-    CloseHandle (pUser->hEvent);
-    Nullit      (*pUser);
-    return 0;
-}
-
 
 /*--------------------------------------------------------------
 
@@ -128,141 +64,21 @@ usb_deinit_user         (USB_PER_USER *pUser)
 int
 usb_init                (void)
 {
-    char            UsbFilename  [] = "\\\\.\\Usbscan%d";
-    char            cFilename [24], *pFilename;
-    int             x;
-    LUN_INQUIRY     rLI;
-    BOOL            bLibUsbErr;
-    struct usb_bus          *bus;
-    struct usb_device       *dev;
-    struct usb_version      *version;
-    usb_dev_handle          *udev;
+    libusb_device_handle          *udev;
 
-    usb.g.hScanner   = NULL;
-    usb.g.hLibUsbDll = NULL;
     usb.g.HA_count   = 0;
 
-    for (x = 0; x < 10; x++)                      // check //./UsbScan?
-    {
-        wsprintf (cFilename, UsbFilename, x);
-        pFilename = cFilename;
-        usb.g.hScanner = CreateFile (pFilename,
-                                     GENERIC_READ | GENERIC_WRITE,
-                                     FILE_SHARE_WRITE | FILE_SHARE_READ,
-                                     NULL,
-                                     OPEN_EXISTING,
-                                     0,
-                                     NULL);
-        if (usb.g.hScanner == INVALID_HANDLE_VALUE)
-            continue;
-        if ((0 == usb_unit_inquiry (&rLI))                  &&
-                (0 == memcmp (rLI.vendor, "CANON ", 6))         &&
-                (0 == memcmp (rLI.product, "IX-40015G ", 10))   )
-        {
-            printf ("Using %s for scanner access\n", pFilename);
-            usb.g.HA_count = 1;
-            return usb_init_user (&usb.u);
-        }
-        CloseHandle (usb.g.hScanner);
-    }
-    usb.g.hScanner = NULL;                        // 0 = no access via file
-
-    usb.g.hLibUsbDll = LoadLibrary ("LIBUSB0.DLL");
-    if (usb.g.hLibUsbDll == 0)
-    {
-//  printf ("ERROR: LIBUSB0.DLL not found.\n");
-        goto bye;
-    }
-
-#define LoadPA(x,y) (FARPROC) x = GetProcAddress (usb.g.hLibUsbDll, y); \
-                    if (!x) bLibUsbErr = TRUE
-
-    bLibUsbErr = FALSE;
-    LoadPA (lusb_open,              "usb_open");
-    LoadPA (lusb_close,             "usb_close");
-    LoadPA (lusb_bulk_read,         "usb_bulk_read");
-    LoadPA (lusb_control_msg,       "usb_control_msg");
-    LoadPA (lusb_set_configuration, "usb_set_configuration");
-    LoadPA (lusb_claim_interface,   "usb_claim_interface");
-    LoadPA (lusb_release_interface, "usb_release_interface");
-    LoadPA (lusb_init,              "usb_init");
-    LoadPA (lusb_set_debug,         "usb_set_debug");
-    LoadPA (lusb_find_busses,       "usb_find_busses");
-    LoadPA (lusb_find_devices,      "usb_find_devices");
-    LoadPA (lusb_get_busses,        "usb_get_busses");
-    LoadPA (lusb_get_version,       "usb_get_version");
-
-    if (bLibUsbErr)
-    {
-        printf ("ERROR: LIBUSB0.DLL function(s) not found.\n");
-        goto bye;
-    }
-
-    lusb_init ();
-    lusb_find_busses ();
-    lusb_find_devices ();
-
-    version = lusb_get_version ();
-    if (version)
-    {
-//  printf ("LibUSB DLL version: %i.%i.%i.%i\n",
-//           version->dll.major, version->dll.minor,
-//           version->dll.micro, version->dll.nano);
-//
-        if (version->driver.major == -1)
-        {
-            printf ("LibUSB driver not running\r\n");
-            goto bye;
-        }
-
-//  printf ("Driver version:     %i.%i.%i.%i\n",
-//           version->driver.major, version->driver.minor,
-//           version->driver.micro, version->driver.nano);
-    }
-
-    for (bus = lusb_get_busses(); bus; bus = bus->next)
-    {
-        for (dev = bus->devices; dev; dev = dev->next)
-        {
-            if (!dev->config)
-                continue;
-
-            if ((dev->descriptor.idVendor  != 0x04A9) ||            // Canon
-                    (dev->descriptor.idProduct != 0x3042) )             // FS4000US
-                continue;
-
-            udev = lusb_open (dev);
-            if (!udev)
-                continue;
-
-//    lusb_set_debug (1);
-//    printf ("config value = %d\n", dev->config[0].bConfigurationValue);
-            x = lusb_set_configuration (udev, dev->config[0].bConfigurationValue);
-            if (x < 0)
-                printf ("set config error = %d\n", x);
-
-            usb.g.pDev = dev;
-            usb.g.pUdev = udev;
-            usb.g.byInterfaceNumber =
-                dev->config[0].interface[0].altsetting[0].bInterfaceNumber;
-
-//    printf ("interface = %d\n", usb.g.byInterfaceNumber);
-            x = lusb_claim_interface (udev, usb.g.byInterfaceNumber);
-            if (x < 0)
-                printf ("claim interface error = %d\n", x);
-
-            usb.g.HA_count = 1;
-            printf ("Using LibUSB for scanner access\n");
-            return usb_init_user (&usb.u);
-        }
-    }
-bye:
-    if (usb.g.hLibUsbDll)
-    {
-        FreeLibrary (usb.g.hLibUsbDll);
-        usb.g.hLibUsbDll = NULL;
-    }
-    return -1;
+    // XXX: error handling
+    libusb_init (NULL);
+    udev = libusb_open_device_with_vid_pid(NULL, 0x04A9, 0x3042);
+    int configuration = 0;
+    libusb_get_configuration(udev, &configuration);
+    libusb_set_configuration(udev, configuration);
+    usb.g.pUdev = udev;
+    usb.g.byInterfaceNumber = 0; // originally dev->config[0].interface[0].altsetting[0].bInterfaceNumber;
+    libusb_claim_interface(udev, usb.g.byInterfaceNumber);
+    usb.g.HA_count = 1;
+    return 0;
 }
 
 
@@ -275,28 +91,10 @@ bye:
 int
 usb_deinit              (void)
 {
-    // release default user fields
-
-    usb_deinit_user (&usb.u);
-
     // close handle
 
-    if (usb.g.hScanner)
-    {
-        CloseHandle (usb.g.hScanner);
-        usb.g.hScanner = NULL;
-    }
-
-    if (usb.g.hLibUsbDll)
-    {
-        lusb_release_interface (usb.g.pUdev, usb.g.byInterfaceNumber);
-        lusb_close (usb.g.pUdev);
-
-        // unload LIBUSB0.DLL
-
-        FreeLibrary (usb.g.hLibUsbDll);
-        usb.g.hLibUsbDll = NULL;
-    }
+    libusb_release_interface (usb.g.pUdev, usb.g.byInterfaceNumber);
+    libusb_close (usb.g.pUdev);
 
     return 0;
 }
@@ -315,9 +113,6 @@ usb_do_request          (DWORD          dwValue,
                          DWORD          dwBufLen)
 {
     BYTE            byRequest, byRequestType;
-    BOOL            bRet;
-    DWORD           cbRet, dwFunc;
-    IO_BLOCK_EX     IoBlockEx;
 
     // bit 7        0 = output, 1 = input
     // bits 6-5     2 = vendor special
@@ -327,46 +122,14 @@ usb_do_request          (DWORD          dwValue,
     // loaded by driver according to ddk
     byRequest = (dwBufLen < 2) ? 0x0C : 0x04;     // is this significant ?
 
-    if (usb.g.hLibUsbDll)                         // using LibUSB ?
-    {
-        lusb_control_msg (usb.g.pUdev,              // usb_dev_handle *dev,
-                          byRequestType,            // int requesttype,
-                          byRequest,                // int request,
-                          dwValue,                  // int value,
-                          0,                        // int index,
-                          pBuf,                     // char *bytes,
-                          dwBufLen,                 // int size,
-                          0);                       // int timeout);
-        return 0;
-    }
-
-    Nullit (IoBlockEx);                           // build I/O block
-    IoBlockEx.uOffset              = dwValue;
-    IoBlockEx.uLength              = dwBufLen;
-    IoBlockEx.pbyData              = (BYTE*) pBuf;
-    IoBlockEx.uIndex               = 0;
-    IoBlockEx.bmRequestType        = byRequestType;
-    IoBlockEx.bRequest             = byRequest;
-    IoBlockEx.fTransferDirectionIn = bInput;
-
-    cbRet = 0;
-    dwFunc = bInput ? IOCTL_READ_REGISTERS : IOCTL_WRITE_REGISTERS;
-
-    bRet = DeviceIoControl (usb.g.hScanner,       // control message
-                            dwFunc,
-                            &IoBlockEx,
-                            sizeof (IoBlockEx),
-                            IoBlockEx.pbyData,
-                            IoBlockEx.uLength,
-                            &cbRet,
-                            NULL);
-
-    if (bRet != 0x01)
-    {
-        printf ("USB DeviceIoControl error = %d\n", GetLastError ());
-        return -1;
-    }
-
+    libusb_control_transfer (usb.g.pUdev,              // usb_dev_handle *dev,
+                             byRequestType,            // int requesttype,
+                             byRequest,                // int request,
+                             dwValue,                  // int value,
+                             0,                        // int index,
+                             pBuf,                     // char *bytes,
+                             dwBufLen,                 // int size,
+                             0);                       // int timeout);
     return 0;
 }
 
@@ -436,10 +199,8 @@ usb_scsi_exec           (void           *cdb,
 
     if (*pbyCmd == 0x28)                          // if read, get bulk data
     {
-        if (usb.g.hLibUsbDll)
-            dwBytes = lusb_bulk_read (usb.g.pUdev, 0x81, save_pdb, save_pdb_len, 0);
-        else
-            ReadFile (usb.g.hScanner, save_pdb, save_pdb_len, &dwBytes, NULL);
+        libusb_bulk_transfer (usb.g.pUdev, 0x81, save_pdb, save_pdb_len, &dwBytes, 0);
+
         if (dwBytes != save_pdb_len)
             return -1;
     }
@@ -459,8 +220,6 @@ usb_scsi_exec           (void           *cdb,
             printf (" %02X", bySensPDB [x]);
         printf ("\n");
     }
-
-    SetEvent (usb.u.hEvent);                              // I/O done
 
     return 0;
 }
