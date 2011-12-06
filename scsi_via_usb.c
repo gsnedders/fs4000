@@ -66,8 +66,6 @@ usb_init                (void)
 {
     libusb_device_handle          *udev;
 
-    usb.g.HA_count   = 0;
-
     // XXX: error handling
     libusb_init (NULL);
     udev = libusb_open_device_with_vid_pid(NULL, 0x04A9, 0x3042);
@@ -77,7 +75,6 @@ usb_init                (void)
     usb.g.pUdev = udev;
     usb.g.byInterfaceNumber = 0; // originally dev->config[0].interface[0].altsetting[0].bInterfaceNumber;
     libusb_claim_interface(udev, usb.g.byInterfaceNumber);
-    usb.g.HA_count = 1;
     return 0;
 }
 
