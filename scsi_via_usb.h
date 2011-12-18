@@ -1,6 +1,5 @@
-#ifdef __cplusplus
-extern "C" {
-#endif //__cplusplus
+#include <libusb.h>
+#include <windows.h>
 
 #define SRB_DIR_IN                  0x08        // Transfer from SCSI target to host
 #define SRB_DIR_OUT                 0x10        // Transfer from host to SCSI target
@@ -45,7 +44,3 @@ int     usb_scsi_exec           (void         *cdb,
                                  unsigned int data_buf_len);
 
 int     usb_unit_inquiry        (LUN_INQUIRY *pLI);
-
-#ifdef __cplusplus
-}
-#endif //__cplusplus

@@ -19,6 +19,10 @@ extern "C" {
 #pragma pack(1)
 #endif //__MSC_VER
 
+#define SS_COMP 1
+#define SS_ABORTED 2
+#define SS_PENDING 3
+
 typedef struct  /* FS4K_FILM_STATUS */
   {
         BYTE    byHolderType;
