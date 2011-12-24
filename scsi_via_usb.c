@@ -31,9 +31,10 @@
 
 --------------------------------------------------------------*/
 
+#include <inttypes.h>
 #include <libusb.h>
-#include <windows.h>
 #include <stdio.h>
+#include <stdbool.h>
 
 #include "scsidefs.h"
 #include "scsi_via_usb.h"
@@ -103,12 +104,12 @@ usb_deinit              (void)
 --------------------------------------------------------------*/
 
 int
-usb_do_request          (DWORD          dwValue,
-                         BOOL           bInput,
-                         void           *pBuf,
-                         DWORD          dwBufLen)
+usb_do_request          (uint16_t       wValue,
+                         bool           bInput,
+                         unsigned char  *pBuf,
+                         uint16_t       dwBufLen)
 {
-    BYTE            byRequest, byRequestType;
+    uint8_t            byRequest, byRequestType;
 
     // bit 7        0 = output, 1 = input
     // bits 6-5     2 = vendor special
@@ -118,14 +119,14 @@ usb_do_request          (DWORD          dwValue,
     // loaded by driver according to ddk
     byRequest = (dwBufLen < 2) ? 0x0C : 0x04;     // is this significant ?
 
-    libusb_control_transfer (usb.g.pUdev,              // usb_dev_handle *dev,
-                             byRequestType,            // int requesttype,
-                             byRequest,                // int request,
-                             dwValue,                  // int value,
-                             0,                        // int index,
-                             pBuf,                     // char *bytes,
-                             dwBufLen,                 // int size,
-                             0);                       // int timeout);
+    libusb_control_transfer (usb.g.pUdev,              // libusb_device_handle *dev,
+                             byRequestType,            // uint8_t requesttype,
+                             byRequest,                // uint8_t request,
+                             wValue,                   // uint16_t wValue,
+                             0,                        // uint16_t index,
+                             pBuf,                     // unsigned char *bytes,
+                             dwBufLen,                 // uint_16 size,
+                             0);                       // unsigned int timeout);
     return 0;
 }
 
@@ -137,21 +138,22 @@ usb_do_request          (DWORD          dwValue,
 --------------------------------------------------------------*/
 
 int
-usb_scsi_exec           (void           *cdb,
+usb_scsi_exec           (unsigned char           *cdb,
                          unsigned int   cdb_length,
                          int            mode_and_dir,
-                         void           *pdb,
+                         unsigned char           *pdb,
                          unsigned int   pdb_len)
 {
     void            *save_pdb    = pdb;
-    DWORD           save_pdb_len = pdb_len;
-    DWORD           dwBytes, x;
-    BYTE            byNull = 0, byOne = 1;
-    BYTE            *pbyCmd = (BYTE*) cdb;
-    BOOL            bInput;
-    DWORD           dwValue, dwValueC5 = 0xC500, dwValue03 = 0x0300;
-    BYTE            byStatPDB [4];          // from C500 request
-    BYTE            bySensPDB [14];         // from 0300 request
+    uint16_t           save_pdb_len = pdb_len;
+    int             dwBytes;
+    uint16_t          x;
+    unsigned char            byNull = 0, byOne = 1;
+    unsigned char   *pbyCmd = cdb;
+    bool            bInput;
+    uint16_t           dwValue, dwValueC5 = 0xC500, dwValue03 = 0x0300;
+    unsigned char            byStatPDB [4];          // from C500 request
+    unsigned char            bySensPDB [14];         // from 0300 request
 
     if (!pdb_len)                         // if no data, use dummy output
     {
@@ -161,19 +163,19 @@ usb_scsi_exec           (void           *cdb,
         pdb_len = 1;
         if (*pbyCmd == 0x00)                        // change for some
             pdb = &byOne;
-        if (*pbyCmd == 0xE4)
+        else if (*pbyCmd == 0xE4)
             pdb = &byOne;
-        if (*pbyCmd == 0xE6)
+        else if (*pbyCmd == 0xE6)
         {
             pdb = pbyCmd + 1;
             pdb_len = 5;
         }
-        if (*pbyCmd == 0xE7)
+        else if (*pbyCmd == 0xE7)
         {
             pdb = pbyCmd + 2;
             pdb_len = 2;
         }
-        if (*pbyCmd == 0xE8)
+        else if (*pbyCmd == 0xE8)
             pdb = pbyCmd + 1;
     }
     if (*pbyCmd == 0x28)                          // if read
@@ -201,7 +203,7 @@ usb_scsi_exec           (void           *cdb,
             return -1;
     }
 
-    if (usb_do_request (dwValueC5, TRUE, &byStatPDB, 4))  // get status
+    if (usb_do_request (dwValueC5, true, &(byStatPDB[0]), 4))  // get status
         return -1;
 
     if (byStatPDB [0] != *pbyCmd)
@@ -210,7 +212,7 @@ usb_scsi_exec           (void           *cdb,
 
     if (byStatPDB [1] & 0xFF)                             // sense data ?
     {
-        usb_do_request (dwValue03, TRUE, &bySensPDB, 14);   // get sense
+      usb_do_request (dwValue03, true, &(bySensPDB[0]), 14);   // get sense
         printf ("sense");
         for (x = 0; x < 14; x++)
             printf (" %02X", bySensPDB [x]);
@@ -219,23 +221,3 @@ usb_scsi_exec           (void           *cdb,
 
     return 0;
 }
-
-
-/*--------------------------------------------------------------
-
-                Get LUN inquiry info
-
---------------------------------------------------------------*/
-
-int
-usb_unit_inquiry        (LUN_INQUIRY *pLI)
-{
-    BYTE            CDB [6];
-
-    Nullit (CDB);
-    CDB [0] = SCSI_INQUIRY;
-    CDB [4] = 36;
-    return usb_scsi_exec (CDB, 6, SRB_DIR_IN, pLI, sizeof (*pLI));
-}
-
-
